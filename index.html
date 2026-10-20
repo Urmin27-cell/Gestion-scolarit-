@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Stock, Caisse & Scolarité</title>
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --purple-color: #6f42c1;
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: #f4f6f9; color: #333;
+        }
+
+        .app-header {
+            background-color: var(--primary-color);
+            color: white; padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .app-header h1 { margin: 0; font-size: 20px; }
+        .app-header p { margin: 3px 0 0 0; font-size: 12px; opacity: 0.9; }
+
+        .nav-tabs {
+            display: flex; background: white;
+            padding: 10px; gap: 6px; overflow-x: auto;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-btn {
+            border: none; background: #e9ecef;
+            padding: 8px 14px; border-radius: 20px;
+            font-weight: 600; cursor: pointer; color: #495057;
+            white-space: nowrap; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { background: var(--primary-color); color: white; }
+
+        .container { padding: 12px; max-width: 980px; margin: 0 auto; }
+        .tab-content {
+            display: none; background: white;
+            padding: 15px; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .tab-content.active { display: block; }
+
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; }
+        input, select, textarea {
+            width: 100%; padding: 8px 10px;
+            border: 1px solid #ced4da; border-radius: 8px;
+            box-sizing: border-box; font-size: 13px;
+        }
+        textarea { resize: vertical; min-height: 70px; font-family: monospace; }
+
+        .btn {
+            width: 100%; padding: 10px; border: none;
+            border-radius: 8px; font-weight: bold;
+            cursor: pointer; font-size: 14px; margin-top: 5px;
+        }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-success { background: var(--success-color); color: white; }
+        .btn-danger { background: var(--danger-color); color: white; }
+        .btn-warning { background: var(--warning-color); color: #212529; }
+        .btn-purple { background: var(--purple-color); color: white; }
+
+        .info-box {
+            background-color: #fff8e1; border: 1px solid #ffe082;
+            padding: 10px; border-radius: 8px; font-size: 12px;
+            color: #6d4c41; margin: 8px 0; line-height: 1.4;
+        }
+        .result-box {
+            background-color: #fff8e1; border: 1px solid #ffca28;
+            padding: 10px; border-radius: 8px; margin: 10px 0;
+            font-size: 13px; font-weight: 600; color: #8d6e63;
+        }
+        .total-display {
+            color: var(--primary-color); font-size: 18px;
+            font-weight: bold; margin: 10px 0;
+        }
+
+        .item-card {
+            border: 1px solid #e0e0e0; padding: 10px;
+            border-radius: 8px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .stock-badge { padding: 3px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-ok { background: #d1e7dd; color: #0f5132; }
+        .badge-warning { background: #fff3cd; color: #664d03; }
+        .badge-danger { background: #f8d7da; color: #842029; }
+
+        /* GRID / CAGE TABLE STYLES */
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; background: white; }
+        th, td { border: 1px solid #b0bec5; padding: 8px; text-align: left; vertical-align: middle; }
+        th { background: #e9ecef; color: #212529; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f5f9; }
+
+        .student-cage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .cage-cell {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .cage-cell label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            display: block;
+        }
+        .cage-cell div {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .chat-container { border: 1px solid #ccc; border-radius: 8px; height: 320px; display: flex; flex-direction: column; background: #fff; }
+        .chat-messages { flex: 1; padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .chat-msg { max-width: 85%; padding: 6px 10px; border-radius: 10px; font-size: 12px; line-height: 1.3; white-space: pre-line; }
+        .chat-msg.bot { background: #e9ecef; align-self: flex-start; }
+        .chat-msg.user { background: var(--primary-color); color: white; align-self: flex-end; }
+        .chat-input-area { display: flex; padding: 6px; border-top: 1px solid #eee; gap: 4px; }
+
+        .row { display: flex; gap: 8px; }
+        .row > div { flex: 1; }
+
+        .pending-box { background-color: #e7f5ff; border: 1px dashed var(--primary-color); padding: 8px; border-radius: 8px; margin-bottom: 10px; }
+        .sale-mode-selector { display: flex; align-items: center; gap: 5px; background: #f8f9fa; padding: 5px 8px; border-radius: 6px; margin-bottom: 8px; }
+
+        .std-img-preview { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
+        
+        @media print {
+            .nav-tabs, .btn, .app-header, input, select, textarea, .pending-box, .chat-container, .backup-bar { display: none !important; }
+            .tab-content { display: block !important; box-shadow: none !important; padding: 0 !important; }
+        }
+    </style>
+
+    <!-- PWA: installation et affichage natif -->
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Gestion Stock">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">\n    <meta name="application-name" content="Gestion Stock">
+
+</head>
+<body>
+
+    <div class="app-header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h1>Gestion Stock, Caisse & Scolarité</h1>
+                <p>Fitantanana Stock, Varotra, Fadohavan-vola, École sy Mpanofa Trano — Offline</p>
+            </div>
+            <!-- Backup & Export Buttons in Header -->
+            <div class="backup-bar" style="display:flex; gap:6px;">
+                <button class="btn btn-warning" style="width:auto; padding:6px 10px; font-size:11px; margin:0;" onclick="downloadBackupJSON()">📥 Misintona backup JSON</button>
+                <button class="btn btn-success" style="width:auto; padding:6px 10px; font-size:11px; margin:0;" onclick="exportStockCSV()">📊 Misintona lisitry ny stock CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="tab-btn" onclick="openTab('topy-maso', event)">Topy maso</button>
+        <button class="tab-btn" onclick="openTab('stock', event)">Stock</button>
+        <button class="tab-btn" onclick="openTab('amidy', event)">Amidy</button>
+        <button class="tab-btn active" onclick="openTab('fadohavan-vola', event)" style="background:#e0cffc; color:#3d0a91;">🎓 Fadohavan-vola / École</button>
+        <button class="tab-btn" onclick="openTab('tantara', event)">Tantara</button>
+        <button class="tab-btn" onclick="openTab('caisse', event)">Caisse</button>
+        <button class="tab-btn" onclick="openTab('chat', event)">Chat Offline</button>
+    </div>
+
+    <div class="container">
+
+        <!-- 1. TOPY MASO / DASHBOARD -->
+        <div id="topy-maso" class="tab-content">
+            <h3>📊 Topy maso ankapobeny (Offline)</h3>
+            <div class="row">
+                <div style="background:#e3f2fd; padding:12px; border-radius:8px; text-align:center;">
+                    <small>Varotra Androany</small>
+                    <h3 id="dash-varotra-today">0 Ar</h3>
+                </div>
+                <div style="background:#e8f5e9; padding:12px; border-radius:8px; text-align:center;">
+                    <small>Tombony Madiro</small>
+                    <h3 id="dash-tombony">0 Ar</h3>
+                </div>
+                <div style="background:#f3e5f5; padding:12px; border-radius:8px; text-align:center;">
+                    <small>Vola École Voaray Today</small>
+                    <h3 id="dash-ecole-today">0 Ar</h3>
+                </div>
+            </div>
+
+            <br>
+            <h4>💰 Totaly ny Vola Miditra isaky ny Classe:</h4>
+            <div id="dash-class-totals" style="background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #ddd;"></div>
+
+            <br>
+            <h4>⚠️ Entana Lany / Ho Lany Stock:</h4>
+            <div id="low-stock-alert"></div>
+        </div>
+
+        <!-- 2. FITANTANANA STOCK -->
+        <div id="stock" class="tab-content">
+            <h3 id="stock-form-title">📦 Ampidiro na Ovay ny Stock</h3>
+            <form id="form-stock" onsubmit="saveStock(event)">
+                <input type="hidden" id="stk-edit-id" value="">
+                
+                <div class="form-group">
+                    <label>Anaran'ny entana (Azo ampiasaina chiffres oh: Vary 90kg, Mi 23)</label>
+                    <input type="text" id="stk-name" placeholder="Ohatra: Vary 90kg, Savon, Mi 23..." required>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>Karazana ampidirina</label>
+                        <select id="stk-type" onchange="toggleTypeInputs()">
+                            <option value="unite">Par Unité / Isa</option>
+                            <option value="kg_kapoka">Kg sy Kapoka</option>
+                            <option value="carton">Par Carton</option>
+                            <option value="paque">Par Paquet</option>
+                            <option value="pharmacie">Varotra Pharmacie (Boîte, Plaquette, Pièce, Carton)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unité Fototra (Kg, Kapoka, Isa, Carton, Boîte...)</label>
+                        <input type="text" id="stk-unit" placeholder="Kg / Kapoka / Boîte / Isa" required>
+                    </div>
+                </div>
+
+                <!-- Carton/Paquet Details -->
+                <div class="row" id="carton-details" style="display:none;">
+                    <div class="form-group">
+                        <label id="container-pcs-label">Isan'ny pièces anaty Carton/Paquet 1</label>
+                        <input type="number" id="stk-pcs-per-carton" placeholder="30 (Azo ajanona raha tsy ilaina)">
+                    </div>
+                    <div class="form-group">
+                        <label>Vidiny Par Carton/Paquet (Ar)</label>
+                        <input type="number" id="stk-p-carton" placeholder="40000 (Azo ajanona)">
+                    </div>
+                </div>
+
+                <!-- Kg & Kapoka Specific Conversion Details -->
+                <div class="row" id="kapoka-details" style="display:none;">
+                    <div class="form-group">
+                        <label>Firy Kapoka ny 1 Kg?</label>
+                        <input type="number" id="stk-kapoka-per-kg" step="any" placeholder="3.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Vidiny 1 Kg (Ar)</label>
+                        <input type="number" id="stk-p-kg" placeholder="3000">
+                    </div>
+                    <div class="form-group">
+                        <label>Vidiny 1 Kapoka (Ar)</label>
+                        <input type="number" id="stk-p-kapoka" placeholder="900">
+                    </div>
+                </div>
+
+                <!-- Pharmacie / Boite, Plaquette & Piece Details -->
+                <div id="pharmacie-details" style="display:none;">
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Isan'ny Pièces anaty Box/Boîte</label>
+                            <input type="number" id="ph-pcs-anaty" placeholder="oh: 20">
+                        </div>
+                        <div class="form-group">
+                            <label>Isan'ny Plaquettes anaty Boîte 1</label>
+                            <input type="number" id="stk-plaquettes-per-boite" placeholder="oh: 10">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Vidiny Par Carton (Ar)</label>
+                            <input type="number" id="ph-p-carton" placeholder="100000">
+                        </div>
+                        <div class="form-group">
+                            <label>Vidiny 1 Boîte (Ar)</label>
+                            <input type="number" id="stk-p-boite" placeholder="5000">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Vidiny isaky Plaquette (Ar)</label>
+                            <input type="number" id="stk-p-plaquette" placeholder="600">
+                        </div>
+                        <div class="form-group">
+                            <label>Vidiny isaky Pièce (Ar)</label>
+                            <input type="number" id="ph-p-piece" placeholder="100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>Quantité ampidirina (Kg / Carton / Boîte / Unité)</label>
+                        <input type="number" id="stk-qty" min="0" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Vidiny mividy (Prix d'achat/unité)</label>
+                        <input type="number" id="stk-p-achat" min="0" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label id="p-piece-label">Vidiny mivarotra Par Piece / Unité (Ar)</label>
+                        <input type="number" id="stk-p-vente" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prix en Gros (Ambongadiny)</label>
+                        <input type="number" id="stk-p-gros" min="0" placeholder="350">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Stock Stop / Seuil alert</label>
+                    <input type="number" id="stk-min" value="5" required>
+                </div>
+
+                <button type="submit" id="btn-save-stock" class="btn btn-primary">Ampidiro amin'ny Stock</button>
+                <button type="button" id="btn-cancel-edit" class="btn btn-danger" style="display:none;" onclick="resetStockForm()">Ajanony ny fanovàna</button>
+            </form>
+
+            <hr>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4>📋 Lisitry ny Stock misy</h4>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-success" style="width:auto; padding:5px 10px; font-size:12px;" onclick="exportStockCSV()">📊 Misintona CSV</button>
+                    <button class="btn btn-primary" style="width:auto; padding:5px 10px; font-size:12px;" onclick="window.print()">🖨️ Imprimer</button>
+                    <button class="btn btn-purple" style="width:auto; padding:5px 10px; font-size:12px;" onclick="shareStockList()">📤 Partager</button>
+                </div>
+            </div>
+            <input type="text" id="search-stock-list" oninput="renderStockTable()" placeholder="🔍 Hitady entana ao anaty stock...">
+            <div style="overflow-x:auto; margin-top:8px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Entana</th>
+                            <th>Stock misy</th>
+                            <th>Vidiny / Unité / Détails</th>
+                            <th>Etat</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. AMIDY / VENTE -->
+        <div id="amidy" class="tab-content">
+            
+            <div class="pending-box">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b>⏳ Varotra En Attente (Miantona):</b>
+                    <button class="btn btn-warning" style="width:auto; padding:4px 8px; font-size:11px;" onclick="holdCurrentSale()">Ajanony miantona ity varotra ity</button>
+                </div>
+                <div id="pending-sales-list" style="margin-top:5px;"></div>
+            </div>
+
+            <h3>🛒 Amidy: entana maro miaraka</h3>
+
+            <div class="form-group">
+                <label>🔍 Bara de recherche Stock (Aseho amin'ny antsipiriany ny vidiny par carton/piece/kg...)</label>
+                <input type="text" id="sale-search" oninput="filterSaleSearch()" placeholder="Soraty ny anaran'entana...">
+                <div id="search-results-dropdown" style="background:#fff; border:1px solid #ccc; max-height:150px; overflow-y:auto; position:relative; z-index:100;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Entana amidy sy ny habetsahana (Azo soratana: Vary 1 kg, Savon 1 carton, Buski 1 piece)</label>
+                <textarea id="sale-raw-input" oninput="calculateSale()" placeholder="savon 1 carton&#10;buski 1 piece&#10;vary 1 kg"></textarea>
+            </div>
+
+            <button class="btn btn-success" onclick="processMultiSale()">Ampidiro miaraka ao anaty lisitra</button>
+
+            <hr style="margin:15px 0;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                <h3 style="margin:0;">🧾 Lisitry ny entana amidy</h3>
+                <div class="sale-mode-selector">
+                    <small><b>Type:</b></small>
+                    <select id="global-sale-type" style="width:auto; padding:3px;" onchange="calculateSale()">
+                        <option value="auto">Auto (Detect)</option>
+                        <option value="piece">Par Pièce</option>
+                        <option value="boit">Par Boit</option>
+                        <option value="paquet">Par Paquet</option>
+                        <option value="placete">Par Placete</option>
+                        <option value="kg">Par Kg</option>
+                        <option value="kapoka">Par Kapoka</option>
+                        <option value="carton">Par Carton</option>
+                        <option value="gros">En Gros</option>
+                        <option value="plaquette">Par Plaquette</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="sale-items-list" style="margin-top:10px;"></div>
+
+            <div class="total-display" id="grand-total-display">TOTALY ANKAPOBENY: 0 Ar</div>
+
+            <div class="form-group">
+                <label>Vola nomen'ny mpanjifa (Ar)</label>
+                <input type="number" id="cash-given" oninput="calculateChange()" placeholder="0">
+            </div>
+
+            <div class="result-box" id="change-result-box">
+                TOTALY: 0 Ar | Vola nomena: 0 Ar | Famerimbola: 0 Ar
+            </div>
+
+            <div class="row">
+                <button class="btn btn-success" onclick="confirmSale()">Hamafiso ny varotra</button>
+                <button class="btn btn-primary" onclick="window.print()">🖨️ Facture</button>
+                <button class="btn btn-purple" onclick="shareFacture()">📤 Partager Facture</button>
+            </div>
+        </div>
+
+        <!-- 4. MENU FADOHAVAN-VOLA / ÉCOLE SY MPANOFA TRANO -->
+        <div id="fadohavan-vola" class="tab-content active">
+            <h3>🎓 Fitantanana Fadohavan-vola / Scolarité sy Mpanofa Trano</h3>
+
+            <!-- Sub Navigation -->
+            <div style="display:flex; gap:5px; margin-bottom:15px; overflow-x:auto;">
+                <button class="btn btn-primary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="showSubTab('school-pay')">💳 Fampidirana Vola École</button>
+                <button class="btn btn-purple" style="width:auto; padding:6px 12px; font-size:12px;" onclick="showSubTab('school-students')">👨‍🎓 Compte Mpianatra</button>
+                <button class="btn btn-warning" style="width:auto; padding:6px 12px; font-size:12px;" onclick="showSubTab('school-config')">⚙️ Configuration Écolage/Droit</button>
+                <button class="btn btn-danger" style="width:auto; padding:6px 12px; font-size:12px;" onclick="showSubTab('school-alerts')">🚨 Alerte Mpianatra Tara / Unpaid</button>
+                <button class="btn btn-success" style="width:auto; padding:6px 12px; font-size:12px;" onclick="showSubTab('rent-section')">🏠 Mpampanofa Trano / Mpanofa</button>
+            </div>
+
+            <!-- Sub Section 1: Fampidirana Vola École -->
+            <div id="sub-school-pay">
+                <h4>💳 Fampidirana Vola École / Droit / Écolage</h4>
+                <form onsubmit="saveSchoolPayment(event)">
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Karazana Vola Miditra</label>
+                            <select id="pay-type" onchange="autofillSchoolAmount()">
+                                <option value="ecolage">Écolage</option>
+                                <option value="droit">Droit d'inscription</option>
+                                <option value="reste">Andoha Reste / Sisa tsy ampy</option>
+                                <option value="fety">Vola Fety / Hafa</option>
+                                <option value="hafa">Fidiram-bola Hafa</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Hitady / Anaran'ny Mpianatra na Olona</label>
+                            <input type="text" id="pay-student-search" oninput="searchStudentPay()" placeholder="Soraty anarana..." required>
+                            <div id="student-pay-dropdown" style="background:#fff; border:1px solid #ccc; max-height:100px; overflow-y:auto; position:relative; z-index:100;"></div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Kilasy (Classe)</label>
+                            <input type="text" id="pay-classe" placeholder="oh: 3ème, 2and" required oninput="autofillSchoolAmount()">
+                        </div>
+                        <div class="form-group">
+                            <label>Volana / Antony (Calendrier / Volana)</label>
+                            <input type="month" id="pay-reason-calendar" onchange="document.getElementById('pay-reason').value = this.value;" style="margin-bottom:4px;">
+                            <input type="text" id="pay-reason" placeholder="oh: Volana Octobre" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Vola Nomena / Aloa (Ariary)</label>
+                            <input type="number" id="pay-amount-given" oninput="calculateSchoolReste()" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Vola Tokony Aloa / Totaly (Ariary - Araka ny Configuration)</label>
+                            <input type="number" id="pay-amount-total" oninput="calculateSchoolReste()" required>
+                        </div>
+                    </div>
+
+                    <div class="result-box" id="school-pay-status-box">
+                        Reste mbola tsy ampy: 0 Ar
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Ampidiro ao amin'ny Compte</button>
+                </form>
+            </div>
+
+            <!-- Sub Section 2: Compte Mpianatra (Par Cage / Grid HTML) -->
+            <div id="sub-school-students" style="display:none;">
+                <h4>👨‍🎓 Fanokafana na Fanovana Compte Mpianatra</h4>
+                <form onsubmit="saveNewStudent(event)">
+                    <input type="hidden" id="std-edit-id" value="">
+                    <div class="row">
+                        <div class="form-group"><label>Anarana Feno</label><input type="text" id="std-name" placeholder="Ohatra: Tendry nantenaina" required></div>
+                        <div class="form-group"><label>Kilasy (Classe)</label><input type="text" id="std-class" placeholder="oh: 2and, 3ème" required></div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group"><label>Sary (Photo / Link / Base64)</label><input type="file" id="std-photo-input" accept="image/*" onchange="previewStudentPhoto(event)"></div>
+                        <div class="form-group"><label>Numéro Inscription</label><input type="text" id="std-num-inscription" placeholder="oh: INS-2026-001"></div>
+                    </div>
+
+                    <!-- Additional Demographics -->
+                    <div class="row">
+                        <div class="form-group"><label>📅 Daty Nahaterahana</label><input type="date" id="std-dob"></div>
+                        <div class="form-group"><label>📍 Toerana Niterahana</label><input type="text" id="std-pob" placeholder="oh: Toamasina I"></div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group"><label>Distrika</label><input type="text" id="std-district" placeholder="oh: Toamasina I"></div>
+                        <div class="form-group"><label>Kaominina</label><input type="text" id="std-commune" placeholder="oh: Toamasina Suburbain"></div>
+                        <div class="form-group"><label>Fokontany</label><input type="text" id="std-fokontany" placeholder="oh: Mangarano"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group"><label>Ray aman-Dreny</label><input type="text" id="std-parents" placeholder="oh: Koto"></div>
+                        <div class="form-group"><label>Numéro Téléphone / Contact</label><input type="text" id="std-phone" placeholder="827737"></div>
+                    </div>
+
+                    <button type="submit" id="btn-save-student" class="btn btn-success">Tehirizo Compte Mpianatra</button>
+                    <button type="button" id="btn-cancel-student-edit" class="btn btn-danger" style="display:none; margin-top:5px;" onclick="resetStudentForm()">Ajanony ny fanovàna</button>
+                </form>
+
+                <hr>
+                <h4>📋 Lisitry ny Compte Mpianatra Rehetra (Tabilao Par Cage)</h4>
+                <input type="text" id="search-student-account" oninput="renderStudentsTable()" placeholder="🔍 Hitady anaran'ny mpianatra, classe, fokontany ao anaty tabilao...">
+                
+                <div style="overflow-x:auto; margin-top:10px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">Sary</th>
+                                <th>Anarana & Num Inscription</th>
+                                <th>Classe</th>
+                                <th>📅 Daty / Toerana Niterahana</th>
+                                <th>Distrika / Kaominina / Fokontany</th>
+                                <th>Ray aman-dreny & Contact</th>
+                                <th>Absences</th>
+                                <th style="min-width:140px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-table-body"></tbody>
+                    </table>
+                </div>
+
+                <!-- Detail View Card / Grid Cage -->
+                <div id="student-detail-card" style="display:none; background:#ffffff; padding:15px; border-radius:10px; margin-top:15px; border:2px solid #b0bec5; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0d6efd; padding-bottom:8px; margin-bottom:12px;">
+                        <h3 id="st-card-title" style="margin:0; color:#0d6efd;"></h3>
+                        <button class="btn btn-danger" style="width:auto; padding:4px 12px; margin:0;" onclick="document.getElementById('student-detail-card').style.display='none'">✕ Aseho ny tabilao</button>
+                    </div>
+
+                    <div style="display:flex; gap:15px; align-items:flex-start; flex-wrap:wrap; margin-bottom:12px;">
+                        <div id="st-card-photo-container"></div>
+                        <div style="flex:1;">
+                            <div id="st-card-warning-area"></div>
+                        </div>
+                    </div>
+
+                    <!-- GRID CAGE D'INFORMATIONS -->
+                    <div class="student-cage-grid" id="st-card-info-grid"></div>
+                    
+                    <div style="margin: 15px 0; display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-warning" style="width:auto; padding:8px 12px; font-size:12px; margin:0;" onclick="addAbsenceToCurrentStudent()">+ Ampidiro amin'ny Tsy Tonga (Absence)</button>
+                        <button class="btn btn-success" style="width:auto; padding:8px 12px; font-size:12px; margin:0;" onclick="payResteForCurrentStudent()">💳 Andoha Reste amin'ny Compte</button>
+                        <button class="btn btn-primary" style="width:auto; padding:8px 12px; font-size:12px; margin:0;" onclick="printStudentAccount()">🖨️ Imprimer Compte</button>
+                        <button class="btn btn-purple" style="width:auto; padding:8px 12px; font-size:12px; margin:0;" onclick="shareStudentAccount()">📤 Partager Compte</button>
+                    </div>
+                    
+                    <h4 style="margin-top:15px; color:#333; border-bottom:1px solid #ddd; padding-bottom:4px;">📜 Tantara fadohavan-vola & Reste manokana (Historique):</h4>
+                    <div style="overflow-x:auto;">
+                        <table style="margin-top:6px;">
+                            <thead>
+                                <tr>
+                                    <th>Daty</th>
+                                    <th>Karazany</th>
+                                    <th>Antony / Volana</th>
+                                    <th>Vola Nomena</th>
+                                    <th>Totaly Tokony Aloa</th>
+                                    <th>Reste</th>
+                                </tr>
+                            </thead>
+                            <tbody id="st-card-history-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub Section 3: Config Écolage & Droit -->
+            <div id="sub-school-config" style="display:none;">
+                <h4>⚙️ Configuration Écolage & Droit par Classe</h4>
+                <form onsubmit="saveClassConfig(event)">
+                    <input type="hidden" id="cfg-edit-id" value="">
+                    <div class="row">
+                        <div class="form-group"><label>Classe (oh: 3ème)</label><input type="text" id="cfg-class" required></div>
+                        <div class="form-group"><label>Écolage / Volana (Ar)</label><input type="number" id="cfg-ecolage" required></div>
+                        <div class="form-group"><label>Droit d'inscription (Ar)</label><input type="number" id="cfg-droit" required></div>
+                    </div>
+                    <button type="submit" id="btn-save-cfg" class="btn btn-primary">Tehirizo Config Classe</button>
+                    <button type="button" id="btn-cancel-cfg-edit" class="btn btn-danger" style="display:none; margin-top:5px;" onclick="resetCfgForm()">Ajanony ny fanovàna</button>
+                </form>
+                
+                <hr>
+                <h4>📋 Tabilao Configuration Classes</h4>
+                <table style="margin-top:10px;">
+                    <thead>
+                        <tr>
+                            <th>Classe</th>
+                            <th>Écolage/Mois (Ar)</th>
+                            <th>Droit (Ar)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="class-config-table"></tbody>
+                </table>
+            </div>
+
+            <!-- Sub Section 4: Alerte Mpianatra Tara / Unpaid -->
+            <div id="sub-school-alerts" style="display:none;">
+                <h4>🚨 Lisitry ny Mpianatra mbola TSY NALOA Écolage na nanana Reste (Offline Readers)</h4>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Fetra andro fadohavana écolage isam-bolana (oh: 20 ho an'ny 20 Octobre)</label>
+                        <input type="number" id="school-deadline-day" value="20" onchange="renderSchoolAlerts()">
+                    </div>
+                </div>
+                <div id="school-unpaid-list"></div>
+            </div>
+
+            <!-- Sub Section 5: Mpampanofa Trano / Mpanofa -->
+            <div id="sub-rent-section" style="display:none;">
+                <h4>🏠 Fitantanana Mpanofa Trano / Loyer</h4>
+                <form onsubmit="saveRentPayment(event)">
+                    <div class="row">
+                        <div class="form-group"><label>Anaran'ny Mpanofa</label><input type="text" id="rent-name" required></div>
+                        <div class="form-group"><label>Porte / Efitrano</label><input type="text" id="rent-door" placeholder="Porte 1" required></div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group"><label>Loyer Aloa (Ar)</label><input type="number" id="rent-amount" required></div>
+                        <div class="form-group"><label>Vola Nomena (Ar)</label><input type="number" id="rent-given" required></div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Ampidiro Loyer</button>
+                </form>
+                <hr>
+                <h4>📋 Lisitry ny Mpanofa Trano & Reste Loyer</h4>
+                <div id="rent-list-box"></div>
+            </div>
+
+        </div>
+
+        <!-- 5. TANTARA SY TATITRA -->
+        <div id="tantara" class="tab-content">
+            <h3>📜 Tantara sy Tatitra ny Varotra & Fadohavan-vola (Historique General)</h3>
+            <div class="row" style="margin-bottom:12px;">
+                <div>
+                    <label>Fidiana Daty (Calendrier):</label>
+                    <input type="date" id="history-date" onchange="filterHistory()">
+                </div>
+                <div>
+                    <label>Sivana Haingana:</label>
+                    <select id="quick-filter" onchange="applyQuickFilter()">
+                        <option value="all">Rehetra</option>
+                        <option value="today">Androany</option>
+                        <option value="yesterday">Omaly</option>
+                        <option value="last-month">Tamin'ny volana lasa</option>
+                    </select>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Daty</th>
+                        <th>Karazany / Antony / Entana</th>
+                        <th>Classe / Olona</th>
+                        <th>Totaly Tokony Aloa</th>
+                        <th>Vola Voaray / Nomena</th>
+                        <th>Reste</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body"></tbody>
+            </table>
+        </div>
+
+        <!-- 6. CAISSE & FATIANTOKA -->
+        <div id="caisse" class="tab-content">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>💰 Fitantanana Caisse (Vola Miditra / Mivoaka / Fatiantoka sy ny Anton)</h3>
+                <div>
+                    <button class="btn btn-primary" style="width:auto; padding:4px 8px; font-size:12px;" onclick="window.print()">🖨️ Imprimer</button>
+                    <button class="btn btn-success" style="width:auto; padding:4px 8px; font-size:12px;" onclick="shareCaisseReport()">📤 Partager Caisse</button>
+                </div>
+            </div>
+            <form onsubmit="addCashTransaction(event)">
+                <div class="form-group">
+                    <label>Karazany</label>
+                    <select id="cash-type">
+                        <option value="in">Vola Miditra Hafa</option>
+                        <option value="out">Vola Mivoaka / Halany</option>
+                        <option value="loss">Fatiantoka (Simba, Very, sy ny sisa)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description / Antony feno</label>
+                    <input type="text" id="cash-desc" placeholder="Ohatra: Hofan-trano, Jiro, Mofo simba, Droit..." required>
+                </div>
+                <div class="form-group">
+                    <label>Laharana Vola (Ar)</label>
+                    <input type="number" id="cash-amount" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Ampidiro ao amin'ny Caisse</button>
+            </form>
+            <hr>
+            <h4>📋 Tantara amin'ny Caisse (Miditra sy Mivoaka)</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Daty</th>
+                        <th>Karazany</th>
+                        <th>Antony / Description</th>
+                        <th>Vola (Ar)</th>
+                    </tr>
+                </thead>
+                <tbody id="caisse-table-body"></tbody>
+            </table>
+        </div>
+
+        <!-- 7. CHAT OFFLINE ASSISTANT -->
+        <div id="chat" class="tab-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0;">💬 Chat Assistant (Offline / Online)</h3>
+                <button class="btn btn-primary" style="width:auto; padding:4px 8px; font-size:12px;" onclick="toggleApiSettings()">⚙️ Paramètres API</button>
+            </div>
+
+            <div id="api-settings-box" style="display:none; background:#f1f3f5; padding:10px; border-radius:8px; margin-bottom:10px;">
+                <label>API Key (OpenAI / Gemini na hafa pour recherche en ligne):</label>
+                <input type="password" id="api-key-input" placeholder="Ampidiro eto ny API Key...">
+                <button class="btn btn-success" style="padding:6px; margin-top:5px;" onclick="saveApiKey()">Tehirizo ny Key</button>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-box">
+                    <div class="chat-msg bot">Manahoana! Izaho no mpanampy anao. Azonao anontaniana ahy momba ny stock, varotra, mpianatra, écolage, reste na ny mpanofa trano.</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Manontania eto... (oh: Firy ny mpianatra mbola tsy nandoa écolage?)">
+                    <button class="btn btn-primary" style="width:auto; margin:0;" onclick="sendChatMessage()">Alefa</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Base Persistence (LocalStorage Offline)
+        let db = {
+            stock: JSON.parse(localStorage.getItem('app_stock')) || [],
+            sales: JSON.parse(localStorage.getItem('app_sales')) || [],
+            caisse: JSON.parse(localStorage.getItem('app_caisse')) || [],
+            pending: JSON.parse(localStorage.getItem('app_pending')) || [],
+            students: JSON.parse(localStorage.getItem('app_students')) || [
+                {
+                    id: 1728000000000,
+                    name: "Tendry nantenaina",
+                    classe: "2and",
+                    numInscription: "INS-2026-001",
+                    dob: "2008-05-12",
+                    pob: "Toamasina",
+                    district: "Toamasina I",
+                    commune: "Toamasina",
+                    fokontany: "Mangarano",
+                    parents: "Koto",
+                    phone: "827737",
+                    address: "Mangarano",
+                    absences: 2,
+                    photo: ""
+                }
+            ],
+            schoolPay: JSON.parse(localStorage.getItem('app_school_pay')) || [
+                { id: 1, studentName: "Tendry nantenaina", classe: "2and", type: "ecolage", reason: "Avril", given: 300000, total: 300000, reste: 0, date: new Date().toISOString() },
+                { id: 2, studentName: "Tendry nantenaina", classe: "2and", type: "ecolage", reason: "Octobre", given: 500000, total: 3000000, reste: 2500000, date: new Date().toISOString() },
+                { id: 3, studentName: "Tendry nantenaina", classe: "2and", type: "reste", reason: "Fadohavan Reste Octobre", given: 100000, total: 2500000, reste: 2400000, date: new Date().toISOString() }
+            ],
+            classConfig: JSON.parse(localStorage.getItem('app_class_cfg')) || [
+                { id: 1, classe: "2and", ecolage: 300000, droit: 50000 },
+                { id: 2, classe: "3ème", ecolage: 2000, droit: 10000 }
+            ],
+            rent: JSON.parse(localStorage.getItem('app_rent')) || [],
+            apiKey: localStorage.getItem('app_api_key') || ''
+        };
+
+        let tempStudentPhotoBase64 = "";
+
+        function saveData() {
+            localStorage.setItem('app_stock', JSON.stringify(db.stock));
+            localStorage.setItem('app_sales', JSON.stringify(db.sales));
+            localStorage.setItem('app_caisse', JSON.stringify(db.caisse));
+            localStorage.setItem('app_pending', JSON.stringify(db.pending));
+            localStorage.setItem('app_students', JSON.stringify(db.students));
+            localStorage.setItem('app_school_pay', JSON.stringify(db.schoolPay));
+            localStorage.setItem('app_class_cfg', JSON.stringify(db.classConfig));
+            localStorage.setItem('app_rent', JSON.stringify(db.rent));
+            localStorage.setItem('app_api_key', db.apiKey);
+            renderDashboard();
+        }
+
+        // --- BACKUP & CSV EXPORT FUNCTIONS ---
+        function downloadBackupJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `backup_app_gestion_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function exportStockCSV() {
+            if (!db.stock || db.stock.length === 0) {
+                alert("Tsy misy stock azo avoaka CSV!");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,ID,Anarana,Type,Unite,Quantite,PrixAchat,PrixVente,PrixGros,SeuilAlert\n";
+            db.stock.forEach(s => {
+                const row = `"${s.id}","${s.name}","${s.type}","${s.unit}",${s.qty},${s.pAchat},${s.pVente},${s.pGros || 0},${s.minSeuil}`;
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `lisitra_stock_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function openTab(tabId, evt) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            if(evt) evt.currentTarget.classList.add('active');
+
+            if(tabId === 'topy-maso') renderDashboard();
+            if(tabId === 'stock') renderStockTable();
+            if(tabId === 'amidy') renderCart();
+            if(tabId === 'tantara') filterHistory();
+            if(tabId === 'caisse') renderCaisseTable();
+            if(tabId === 'fadohavan-vola') {
+                renderClassConfigTable();
+                renderStudentsTable();
+            }
+        }
+
+        function showSubTab(subId) {
+            document.getElementById('sub-school-pay').style.display = subId === 'school-pay' ? 'block' : 'none';
+            document.getElementById('sub-school-students').style.display = subId === 'school-students' ? 'block' : 'none';
+            document.getElementById('sub-school-config').style.display = subId === 'school-config' ? 'block' : 'none';
+            document.getElementById('sub-school-alerts').style.display = subId === 'school-alerts' ? 'block' : 'none';
+            document.getElementById('sub-rent-section').style.display = subId === 'rent-section' ? 'block' : 'none';
+
+            if(subId === 'school-students') renderStudentsTable();
+            if(subId === 'school-config') renderClassConfigTable();
+            if(subId === 'school-alerts') renderSchoolAlerts();
+            if(subId === 'rent-section') renderRentList();
+        }
+
+        function toggleTypeInputs() {
+            const type = document.getElementById('stk-type').value;
+            document.getElementById('carton-details').style.display = (type === 'carton' || type === 'paque') ? 'flex' : 'none';
+            document.getElementById('kapoka-details').style.display = (type === 'kg_kapoka') ? 'flex' : 'none';
+            document.getElementById('pharmacie-details').style.display = (type === 'pharmacie') ? 'block' : 'none';
+            
+            const pieceLabel = document.getElementById('p-piece-label');
+            if (pieceLabel) {
+                if (type === 'carton') pieceLabel.innerText = "Prix par pièce / Isa (Ar)";
+                else if (type === 'kg_kapoka') pieceLabel.innerText = "Prix 1 Kg (Ar)";
+                else if (type === 'pharmacie') pieceLabel.innerText = "Vidiny Par Pièce (Ar)";
+                else pieceLabel.innerText = "Prix par pièce / Unité (Ar)";
+            }
+        }
+
+        // 1. Stock Operations
+        function saveStock(e) {
+            e.preventDefault();
+            const editId = document.getElementById('stk-edit-id').value;
+            const name = document.getElementById('stk-name').value.trim();
+            const type = document.getElementById('stk-type').value;
+            const unit = document.getElementById('stk-unit').value.trim();
+            
+            const pcsPerCarton = parseFloat(document.getElementById('stk-pcs-per-carton').value) || 0;
+            const pCarton = parseFloat(document.getElementById('stk-p-carton').value) || 0;
+            const kapokaPerKg = parseFloat(document.getElementById('stk-kapoka-per-kg').value) || 0;
+            const pKg = parseFloat(document.getElementById('stk-p-kg').value) || 0;
+            const pKapoka = parseFloat(document.getElementById('stk-p-kapoka').value) || 0;
+            
+            const phPcsAnaty = parseFloat(document.getElementById('ph-pcs-anaty').value) || 0;
+            const plaquettesPerBoite = parseFloat(document.getElementById('stk-plaquettes-per-boite').value) || 0;
+            const phPCarton = parseFloat(document.getElementById('ph-p-carton').value) || 0;
+            const pBoite = parseFloat(document.getElementById('stk-p-boite').value) || 0;
+            const pPlaquette = parseFloat(document.getElementById('stk-p-plaquette').value) || 0;
+            const phPPiece = parseFloat(document.getElementById('ph-p-piece').value) || 0;
+
+            let qty = parseFloat(document.getElementById('stk-qty').value);
+            const pAchat = parseFloat(document.getElementById('stk-p-achat').value);
+            let pVente = parseFloat(document.getElementById('stk-p-vente').value);
+
+            if (type === 'kg_kapoka' && pKg > 0) pVente = pKg;
+            else if (type === 'pharmacie' && phPPiece > 0) pVente = phPPiece;
+
+            const pGros = parseFloat(document.getElementById('stk-p-gros').value) || pVente;
+            const minSeuil = parseFloat(document.getElementById('stk-min').value);
+
+            const stockObj = {
+                id: editId ? parseFloat(editId) : Date.now(),
+                name, unit, type, pcsPerCarton, pCarton, kapokaPerKg, pKg, pKapoka,
+                phPcsAnaty, plaquettesPerBoite, phPCarton, pBoite, pPlaquette, phPPiece,
+                qty: qty, pAchat, pVente, pGros, minSeuil
+            };
+
+            if (editId) {
+                const idx = db.stock.findIndex(s => s.id == editId);
+                if (idx >= 0) db.stock[idx] = stockObj;
+            } else {
+                const existingIdx = db.stock.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+                if (existingIdx >= 0) {
+                    db.stock[existingIdx].qty += qty;
+                } else {
+                    db.stock.push(stockObj);
+                }
+            }
+
+            saveData();
+            alert('Stock voatahiry / voaova soa aman-tsara!');
+            resetStockForm();
+            renderStockTable();
+        }
+
+        function editStock(id) {
+            const stk = db.stock.find(s => s.id === id);
+            if(!stk) return;
+
+            document.getElementById('stk-edit-id').value = stk.id;
+            document.getElementById('stk-name').value = stk.name;
+            document.getElementById('stk-type').value = stk.type || 'unite';
+            document.getElementById('stk-unit').value = stk.unit || '';
+            document.getElementById('stk-pcs-per-carton').value = stk.pcsPerCarton || '';
+            document.getElementById('stk-p-carton').value = stk.pCarton || '';
+            document.getElementById('stk-kapoka-per-kg').value = stk.kapokaPerKg || '';
+            document.getElementById('stk-p-kg').value = stk.pKg || '';
+            document.getElementById('stk-p-kapoka').value = stk.pKapoka || '';
+            
+            document.getElementById('ph-pcs-anaty').value = stk.phPcsAnaty || '';
+            document.getElementById('stk-plaquettes-per-boite').value = stk.plaquettesPerBoite || '';
+            document.getElementById('ph-p-carton').value = stk.phPCarton || '';
+            document.getElementById('stk-p-boite').value = stk.pBoite || '';
+            document.getElementById('stk-p-plaquette').value = stk.pPlaquette || '';
+            document.getElementById('ph-p-piece').value = stk.phPPiece || '';
+
+            document.getElementById('stk-qty').value = stk.qty;
+            document.getElementById('stk-p-achat').value = stk.pAchat;
+            document.getElementById('stk-p-vente').value = stk.pVente;
+            document.getElementById('stk-p-gros').value = stk.pGros || stk.pVente;
+            document.getElementById('stk-min').value = stk.minSeuil;
+
+            toggleTypeInputs();
+            document.getElementById('stock-form-title').innerText = "✏️ Ovay ny Stock: " + stk.name;
+            document.getElementById('btn-save-stock').innerText = "Hamafiso ny fanovàna";
+            document.getElementById('btn-cancel-edit').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetStockForm() {
+            document.getElementById('form-stock').reset();
+            document.getElementById('stk-edit-id').value = '';
+            document.getElementById('stock-form-title').innerText = "📦 Ampidiro na Ovay ny Stock";
+            document.getElementById('btn-save-stock').innerText = "Ampidiro amin'ny Stock";
+            document.getElementById('btn-cancel-edit').style.display = "none";
+            toggleTypeInputs();
+        }
+
+        function renderStockTable() {
+            const tbody = document.getElementById('stock-table-body');
+            const search = document.getElementById('search-stock-list').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            db.stock.filter(s => s.name.toLowerCase().includes(search)).forEach(s => {
+                let statusBadge = `<span class="stock-badge badge-ok">Misy</span>`;
+                if (s.qty <= 0) statusBadge = `<span class="stock-badge badge-danger">Lany / Tsy misy</span>`;
+                else if (s.qty <= s.minSeuil) statusBadge = `<span class="stock-badge badge-warning">Ho lany stock: ${s.qty.toFixed(1)} ${s.unit}</span>`;
+
+                let detailsText = `${s.pVente} Ar/Piece`;
+                if(s.type === 'kg_kapoka') {
+                    detailsText = `${s.pKg || s.pVente} Ar/Kg`;
+                    if(s.pKapoka) detailsText += ` | ${s.pKapoka} Ar/Kapoka`;
+                } else if(s.type === 'carton' || s.type === 'paque') {
+                    detailsText = `${s.pVente} Ar/Piece`;
+                    if(s.pCarton) detailsText += ` | ${s.pCarton} Ar/${s.type === 'carton' ? 'Carton' : 'Paquet'}`;
+                } else if(s.type === 'pharmacie') {
+                    detailsText = `${s.phPPiece || s.pVente} Ar/Pièce`;
+                    if(s.pPlaquette) detailsText += ` | ${s.pPlaquette} Ar/Plaquette`;
+                    if(s.pBoite) detailsText += ` | ${s.pBoite} Ar/Boîte`;
+                    if(s.phPCarton) detailsText += ` | ${s.phPCarton} Ar/Carton`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${s.name}</b></td>
+                        <td>${s.qty.toFixed(1)} ${s.unit || 'Isa'}</td>
+                        <td>${detailsText}</td>
+                        <td>${statusBadge}</td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn btn-warning" style="width:auto; padding:3px 6px; font-size:11px;" onclick="editStock(${s.id})">✏️ Ovay</button>
+                            <button class="btn btn-danger" style="width:auto; padding:3px 6px; font-size:11px;" onclick="deleteStock(${s.id})">Fafana</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deleteStock(id) {
+            if(confirm('Tena hofaana ity entana ity?')) {
+                db.stock = db.stock.filter(s => s.id !== id);
+                saveData();
+                renderStockTable();
+            }
+        }
+
+        function shareStockList() {
+            let text = "📦 LISITRY NY STOCK MISY REHETRA:\n";
+            db.stock.forEach(s => text += `• ${s.name}: ${s.qty.toFixed(1)} ${s.unit} (Vidiny: ${s.pVente} Ar)\n`);
+            if (navigator.share) navigator.share({ title: 'Lisitry ny Stock', text: text });
+            else alert(text);
+        }
+
+        // 2. Sales / Amidy Operations
+        let currentCart = [];
+
+        function filterSaleSearch() {
+            const val = document.getElementById('sale-search').value.toLowerCase();
+            const drop = document.getElementById('search-results-dropdown');
+            drop.innerHTML = '';
+            if(!val) return;
+
+            const matches = db.stock.filter(s => s.name.toLowerCase().includes(val));
+            matches.forEach(m => {
+                let detailsStr = `<b>${m.name}</b> (${m.qty} ${m.unit} misy)<br><small>Vidiny: ${m.pVente} Ar/pc`;
+                if(m.pCarton) detailsStr += ` | ${m.pCarton} Ar/carton`;
+                if(m.pKg) detailsStr += ` | ${m.pKg} Ar/kg`;
+                if(m.pKapoka) detailsStr += ` | ${m.pKapoka} Ar/kapoka`;
+                if(m.pBoite) detailsStr += ` | ${m.pBoite} Ar/boîte`;
+                if(m.pPlaquette) detailsStr += ` | ${m.pPlaquette} Ar/plaquette`;
+                detailsStr += `</small>`;
+
+                const div = document.createElement('div');
+                div.style.padding = '8px'; div.style.cursor = 'pointer'; div.style.borderBottom = '1px solid #eee';
+                div.innerHTML = detailsStr;
+                div.onclick = () => {
+                    const txt = document.getElementById('sale-raw-input');
+                    txt.value += (txt.value ? '\n' : '') + `${m.name} 1`;
+                    drop.innerHTML = ''; document.getElementById('sale-search').value = '';
+                    calculateSale();
+                };
+                drop.appendChild(div);
+            });
+        }
+
+        function calculateSale() {
+            const raw = document.getElementById('sale-raw-input').value.trim();
+            const globalType = document.getElementById('global-sale-type').value;
+            const lines = raw.split('\n');
+            currentCart = [];
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if(!trimmed) return;
+
+                let name = trimmed;
+                let qty = 1;
+                let detectedUnitMode = globalType;
+
+                const lower = trimmed.toLowerCase();
+                if(lower.includes('carton')) detectedUnitMode = 'carton';
+                else if(lower.includes('boit') || lower.includes('boîte')) detectedUnitMode = 'boit';
+                else if(lower.includes('paquet') || lower.includes('paque')) detectedUnitMode = 'paquet';
+                else if(lower.includes('placete') || lower.includes('plaquette')) detectedUnitMode = 'placete';
+                else if(lower.includes('kg')) detectedUnitMode = 'kg';
+                else if(lower.includes('kapoka')) detectedUnitMode = 'kapoka';
+                else if(lower.includes('piece') || lower.includes('isa')) detectedUnitMode = 'piece';
+
+                const lastSpaceIndex = trimmed.lastIndexOf(' ');
+                if (lastSpaceIndex !== -1) {
+                    const possibleQtyStr = trimmed.substring(lastSpaceIndex + 1);
+                    if (!isNaN(possibleQtyStr) && possibleQtyStr !== "") {
+                        qty = parseFloat(possibleQtyStr);
+                        name = trimmed.substring(0, lastSpaceIndex).replace(/carton|boit|boîte|paquet|placete|plaquette|kg|kapoka|piece|isa/gi, '').trim();
+                    }
+                }
+
+                let item = db.stock.find(s => s.name.toLowerCase() === name.toLowerCase());
+                if(!item) item = db.stock.find(s => s.name.toLowerCase().startsWith(name.toLowerCase()));
+
+                if(item) {
+                    let unitPrice = item.pVente;
+                    if(detectedUnitMode === 'carton' && (item.pCarton || item.phPCarton)) unitPrice = item.pCarton || item.phPCarton;
+                    else if(detectedUnitMode === 'boit' && item.pBoite) unitPrice = item.pBoite;
+                    else if(detectedUnitMode === 'kapoka' && item.pKapoka) unitPrice = item.pKapoka;
+                    else if(detectedUnitMode === 'kg' && item.pKg) unitPrice = item.pKg;
+                    else if((detectedUnitMode === 'placete' || detectedUnitMode === 'plaquette') && item.pPlaquette) unitPrice = item.pPlaquette;
+                    else if(detectedUnitMode === 'piece' && item.phPPiece) unitPrice = item.phPPiece;
+                    else if(detectedUnitMode === 'gros' && item.pGros) unitPrice = item.pGros;
+
+                    currentCart.push({
+                        stockId: item.id, name: item.name, qty: qty,
+                        unitMode: detectedUnitMode, unitPrice: unitPrice,
+                        totalPrice: qty * unitPrice, availableQty: item.qty, unit: item.unit
+                    });
+                }
+            });
+
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('sale-items-list');
+            container.innerHTML = '';
+            let grandTotal = 0;
+
+            currentCart.forEach((item, index) => {
+                grandTotal += item.totalPrice;
+                container.innerHTML += `
+                    <div class="item-card">
+                        <div>
+                            <b>${item.name}</b> <small>(${item.unitPrice} Ar / ${item.unitMode})</small>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="number" value="${item.qty}" style="width:60px;" onchange="updateCartQty(${index}, this.value)">
+                            <span><b>${item.totalPrice} Ar</b></span>
+                            <button class="btn btn-danger" style="width:auto; padding:4px 8px;" onclick="removeFromCart(${index})">X</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('grand-total-display').innerText = `TOTALY ANKAPOBENY: ${grandTotal} Ar`;
+            calculateChange();
+        }
+
+        function updateCartQty(index, newQty) {
+            currentCart[index].qty = parseFloat(newQty) || 0;
+            currentCart[index].totalPrice = currentCart[index].qty * currentCart[index].unitPrice;
+            renderCart();
+        }
+
+        function removeFromCart(index) { currentCart.splice(index, 1); renderCart(); }
+
+        function calculateChange() {
+            const grandTotal = currentCart.reduce((sum, item) => sum + item.totalPrice, 0);
+            const cashGiven = parseFloat(document.getElementById('cash-given').value) || 0;
+            const changeBox = document.getElementById('change-result-box');
+
+            if(cashGiven >= grandTotal) {
+                const change = cashGiven - grandTotal;
+                changeBox.style.backgroundColor = '#d1e7dd'; changeBox.style.color = '#0f5132';
+                changeBox.innerHTML = `TOTALY: ${grandTotal} Ar | Vola nomena: ${cashGiven} Ar | <b>Famerimbola: ${change} Ar</b>`;
+            } else {
+                const missing = grandTotal - cashGiven;
+                changeBox.style.backgroundColor = '#f8d7da'; changeBox.style.color = '#842029';
+                changeBox.innerHTML = `TOTALY: ${grandTotal} Ar | Vola nomena: ${cashGiven} Ar | <b>Vola mbola tsy ampy: ${missing} Ar</b>`;
+            }
+        }
+
+        function confirmSale() {
+            if(currentCart.length === 0) return alert("Tsy misy entana hamidy!");
+            const grandTotal = currentCart.reduce((sum, item) => sum + item.totalPrice, 0);
+            const cashGiven = parseFloat(document.getElementById('cash-given').value) || 0;
+            if(cashGiven < grandTotal) return alert("Mbola tsy ampy ny vola nomena!");
+
+            currentCart.forEach(item => {
+                const stk = db.stock.find(s => s.id === item.stockId);
+                if(stk) stk.qty -= item.qty;
+            });
+
+            const saleEntry = { id: Date.now(), date: new Date().toISOString(), items: currentCart, total: grandTotal, cashGiven };
+            db.sales.push(saleEntry);
+            
+            // Record in general Caisse automatically
+            db.caisse.push({ id: Date.now(), date: new Date().toISOString(), type: 'in', desc: `Varotra Entana (Totaly)`, amount: grandTotal });
+
+            saveData();
+            alert("Lasa ny varotra ary voa-enregistrer ao am Caisse & Tantara!");
+            currentCart = [];
+            document.getElementById('sale-raw-input').value = '';
+            document.getElementById('cash-given').value = '';
+            renderCart();
+        }
+
+        function shareFacture() {
+            let text = "🧾 FACTURE VAROTRA:\n";
+            currentCart.forEach(i => text += `• ${i.name} (${i.qty} ${i.unitMode}): ${i.totalPrice} Ar\n`);
+            text += `TOTALY: ${document.getElementById('grand-total-display').innerText}`;
+            if(navigator.share) navigator.share({ title: 'Facture', text: text });
+            else alert(text);
+        }
+
+        // 3. FADOHAVAN-VOLA / ÉCOLE LOGIC
+        function previewStudentPhoto(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    tempStudentPhotoBase64 = evt.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveNewStudent(e) {
+            e.preventDefault();
+            const editId = document.getElementById('std-edit-id').value;
+            const studentData = {
+                id: editId ? parseFloat(editId) : Date.now(),
+                name: document.getElementById('std-name').value.trim(),
+                classe: document.getElementById('std-class').value.trim(),
+                numInscription: document.getElementById('std-num-inscription').value.trim(),
+                dob: document.getElementById('std-dob').value,
+                pob: document.getElementById('std-pob').value.trim(),
+                district: document.getElementById('std-district').value.trim(),
+                commune: document.getElementById('std-commune').value.trim(),
+                fokontany: document.getElementById('std-fokontany').value.trim(),
+                parents: document.getElementById('std-parents').value.trim(),
+                phone: document.getElementById('std-phone').value.trim(),
+                address: document.getElementById('std-fokontany').value.trim() || "Mangarano",
+                photo: tempStudentPhotoBase64,
+                absences: 0
+            };
+
+            if (editId) {
+                const idx = db.students.findIndex(s => s.id == editId);
+                if (idx >= 0) {
+                    studentData.absences = db.students[idx].absences; 
+                    if(!tempStudentPhotoBase64) studentData.photo = db.students[idx].photo;
+                    db.students[idx] = studentData;
+                }
+                alert("Voaova soa aman-tsara ny Compte Mpianatra!");
+            } else {
+                db.students.push(studentData);
+                alert("Compte Mpianatra Misokatra Soaman-tsara!");
+            }
+
+            saveData();
+            resetStudentForm();
+            renderStudentsTable();
+        }
+
+        function editStudent(id) {
+            const st = db.students.find(s => s.id === id);
+            if(!st) return;
+
+            document.getElementById('std-edit-id').value = st.id;
+            document.getElementById('std-name').value = st.name;
+            document.getElementById('std-class').value = st.classe;
+            document.getElementById('std-num-inscription').value = st.numInscription || '';
+            document.getElementById('std-dob').value = st.dob || '';
+            document.getElementById('std-pob').value = st.pob || '';
+            document.getElementById('std-district').value = st.district || '';
+            document.getElementById('std-commune').value = st.commune || '';
+            document.getElementById('std-fokontany').value = st.fokontany || '';
+            document.getElementById('std-parents').value = st.parents || '';
+            document.getElementById('std-phone').value = st.phone || '';
+
+            document.getElementById('btn-save-student').innerText = "Hamafiso ny fanovàna";
+            document.getElementById('btn-cancel-student-edit').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetStudentForm() {
+            document.getElementById('std-edit-id').value = '';
+            document.getElementById('std-name').value = '';
+            document.getElementById('std-class').value = '';
+            document.getElementById('std-num-inscription').value = '';
+            document.getElementById('std-dob').value = '';
+            document.getElementById('std-pob').value = '';
+            document.getElementById('std-district').value = '';
+            document.getElementById('std-commune').value = '';
+            document.getElementById('std-fokontany').value = '';
+            document.getElementById('std-parents').value = '';
+            document.getElementById('std-phone').value = '';
+            tempStudentPhotoBase64 = "";
+            document.getElementById('btn-save-student').innerText = "Tehirizo Compte Mpianatra";
+            document.getElementById('btn-cancel-student-edit').style.display = "none";
+        }
+
+        function deleteStudent(id) {
+            if(confirm("Tena fafana ity compte mpianatra ity?")) {
+                db.students = db.students.filter(s => s.id !== id);
+                saveData();
+                renderStudentsTable();
+                document.getElementById('student-detail-card').style.display = 'none';
+            }
+        }
+
+        function searchStudentPay() {
+            const query = document.getElementById('pay-student-search').value.toLowerCase();
+            const drop = document.getElementById('student-pay-dropdown');
+            drop.innerHTML = '';
+            if(!query) return;
+
+            db.students.filter(s => s.name.toLowerCase().includes(query)).forEach(s => {
+                const div = document.createElement('div');
+                div.style.padding = '6px'; div.style.cursor = 'pointer'; div.style.borderBottom = '1px solid #eee';
+                div.innerHTML = `<b>${s.name}</b> (${s.classe})`;
+                div.onclick = () => {
+                    document.getElementById('pay-student-search').value = s.name;
+                    document.getElementById('pay-classe').value = s.classe;
+                    drop.innerHTML = '';
+                    autofillSchoolAmount();
+                };
+                drop.appendChild(div);
+            });
+        }
+
+        function autofillSchoolAmount() {
+            const classe = document.getElementById('pay-classe').value.trim();
+            const payType = document.getElementById('pay-type').value;
+            const studentName = document.getElementById('pay-student-search').value.trim();
+            const totalInput = document.getElementById('pay-amount-total');
+
+            if(payType === 'reste' && studentName) {
+                // Find remaining rest for student
+                const studentPays = db.schoolPay.filter(p => p.studentName.toLowerCase() === studentName.toLowerCase() && p.reste > 0);
+                const lastRest = studentPays.length > 0 ? studentPays[studentPays.length - 1].reste : 0;
+                totalInput.value = lastRest;
+                calculateSchoolReste();
+                return;
+            }
+
+            const cfg = db.classConfig.find(c => c.classe.toLowerCase() === classe.toLowerCase());
+            if (cfg) {
+                if (payType === 'ecolage') totalInput.value = cfg.ecolage;
+                else if (payType === 'droit') totalInput.value = cfg.droit;
+                calculateSchoolReste();
+            }
+        }
+
+        function calculateSchoolReste() {
+            const given = parseFloat(document.getElementById('pay-amount-given').value) || 0;
+            const total = parseFloat(document.getElementById('pay-amount-total').value) || 0;
+            const box = document.getElementById('school-pay-status-box');
+
+            if(given < total) {
+                const reste = total - given;
+                box.style.backgroundColor = '#f8d7da'; box.style.color = '#842029';
+                box.innerText = `⚠️ Tsy ampy ny vola! Reste mbola tsy ampy ka ho Reste am Compte: ${reste} Ar`;
+            } else {
+                const change = given - total;
+                box.style.backgroundColor = '#d1e7dd'; box.style.color = '#0f5132';
+                box.innerText = `✅ Ampy ny vola! Famerimbola: ${change} Ar`;
+            }
+        }
+
+        function saveSchoolPayment(e) {
+            e.preventDefault();
+            const given = parseFloat(document.getElementById('pay-amount-given').value);
+            const total = parseFloat(document.getElementById('pay-amount-total').value);
+            const type = document.getElementById('pay-type').value;
+            const studentName = document.getElementById('pay-student-search').value.trim();
+            const classe = document.getElementById('pay-classe').value.trim();
+            const reason = document.getElementById('pay-reason').value.trim();
+
+            const payObj = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                type: type,
+                studentName: studentName,
+                classe: classe,
+                reason: reason,
+                given: given,
+                total: total,
+                reste: Math.max(0, total - given)
+            };
+
+            db.schoolPay.push(payObj);
+
+            // Record into General Caisse automatically
+            db.caisse.push({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                type: 'in',
+                desc: `École (${type.toUpperCase()}): ${studentName} (${classe}) - ${reason}`,
+                amount: given
+            });
+
+            saveData();
+            alert("Vola tafiditra soa aman-tsara amin'ny Compte sy ny Caisse sy ny Tantara!");
+            e.target.reset();
+            if(selectedStudentId) viewStudentDetail(selectedStudentId);
+        }
+
+        let selectedStudentId = null;
+        function renderStudentsTable() {
+            const tbody = document.getElementById('students-table-body');
+            const q = document.getElementById('search-student-account').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            db.students.filter(s => 
+                s.name.toLowerCase().includes(q) || 
+                s.classe.toLowerCase().includes(q) || 
+                (s.fokontany && s.fokontany.toLowerCase().includes(q))
+            ).forEach(st => {
+                let warningBadge = st.absences >= 3 ? `<span class="stock-badge badge-danger">(${st.absences} Abs)</span>` : `<span class="stock-badge badge-ok">${st.absences}</span>`;
+                let imgTag = st.photo ? `<img src="${st.photo}" class="std-img-preview">` : `<div class="std-img-preview" style="display:flex; align-items:center; justify-content:center; background:#eee; font-size:20px;">👤</div>`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align:center;">${imgTag}</td>
+                        <td><b>${st.name}</b><br><small style="color:#666;">${st.numInscription || 'N/A'}</small></td>
+                        <td><b style="color:var(--purple-color);">${st.classe}</b></td>
+                        <td>${st.dob || 'N/A'}<br><small style="color:#555;">📍 ${st.pob || '-'}</small></td>
+                        <td><small>Dist:</small> ${st.district || '-'}<br><small>Kao:</small> ${st.commune || '-'}<br><small>Fok:</small> <b>${st.fokontany || '-'}</b></td>
+                        <td><b>Ray:</b> ${st.parents || 'Koto'}<br><b>Contact:</b> ${st.phone || '827737'}</td>
+                        <td style="text-align:center;">${warningBadge}</td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn btn-primary" style="width:auto; padding:4px 8px; font-size:11px;" onclick="viewStudentDetail(${st.id})">👁️ Jereo Compte</button>
+                            <button class="btn btn-warning" style="width:auto; padding:4px 8px; font-size:11px;" onclick="editStudent(${st.id})">✏️ Ovay</button>
+                            <button class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:11px;" onclick="deleteStudent(${st.id})">Fafana</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function viewStudentDetail(id) {
+            const st = db.students.find(s => s.id === id);
+            if(!st) return;
+            selectedStudentId = st.id;
+            const detailCard = document.getElementById('student-detail-card');
+            detailCard.style.display = 'block';
+            document.getElementById('st-card-title').innerText = `👨‍🎓 Compte Mpianatra: ${st.name} (${st.classe})`;
+            
+            let photoHtml = st.photo ? `<img src="${st.photo}" style="width:90px; height:90px; border-radius:12px; object-fit:cover; border:2px solid #0d6efd;">` : `<div style="width:90px; height:90px; border-radius:12px; background:#e9ecef; display:flex; align-items:center; justify-content:center; font-size:36px; border:2px solid #ccc;">👤</div>`;
+            document.getElementById('st-card-photo-container').innerHTML = photoHtml;
+
+            let warningArea = document.getElementById('st-card-warning-area');
+            if (st.absences >= 3) {
+                warningArea.innerHTML = `<div class="result-box" style="background-color:#f8d7da; color:#842029; border-color:#f5c2c7; margin:0;">🚨 AVERTISSEMENT AUTOMATIQUE: Mpianatra efa nanana ${st.absences} absences!</div>`;
+            } else {
+                warningArea.innerHTML = `<div class="result-box" style="background-color:#d1e7dd; color:#0f5132; border-color:#badbcc; margin:0;">✅ Tsy misy alerte d'absence grave (${st.absences} tsy tonga).</div>`;
+            }
+
+            // POPULATE CAGE GRID
+            const gridContainer = document.getElementById('st-card-info-grid');
+            gridContainer.innerHTML = `
+                <div class="cage-cell">
+                    <label>Numéro Inscription</label>
+                    <div>${st.numInscription || 'INS-2026-001'}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>Kilasy / Classe</label>
+                    <div>${st.classe}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>📅 Daty Nahaterahana</label>
+                    <div>${st.dob || 'N/A'}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>📍 Toerana Niterahana</label>
+                    <div>${st.pob || 'N/A'}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>Distrika</label>
+                    <div>${st.district || 'N/A'}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>Kaominina</label>
+                    <div>${st.commune || 'N/A'}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>Fokontany</label>
+                    <div>${st.fokontany || 'N/A'}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>👨‍👩‍👦 Ray aman-dreny</label>
+                    <div>${st.parents || 'Koto'}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>📞 Contact Phone</label>
+                    <div>${st.phone || '827737'}</div>
+                </div>
+                <div class="cage-cell">
+                    <label>❌ Absences (Tsy tonga)</label>
+                    <div>${st.absences} andro</div>
+                </div>
+            `;
+
+            const pays = db.schoolPay.filter(p => p.studentName.toLowerCase() === st.name.toLowerCase());
+            const tbodyHist = document.getElementById('st-card-history-tbody');
+            tbodyHist.innerHTML = '';
+
+            if (pays.length > 0) {
+                pays.forEach(p => {
+                    let resteBadge = p.reste > 0 ? `<span class="stock-badge badge-danger">${p.reste} Ar</span>` : `<span class="stock-badge badge-ok">AMPI</span>`;
+                    tbodyHist.innerHTML += `
+                        <tr>
+                            <td>${new Date(p.date).toLocaleDateString()}</td>
+                            <td><b>${p.type.toUpperCase()}</b></td>
+                            <td>${p.reason}</td>
+                            <td><b>${p.given} Ar</b></td>
+                            <td>${p.total} Ar</td>
+                            <td>${resteBadge}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbodyHist.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#777;">Tsy mbola misy fadohavan-vola voasoratra.</td></tr>`;
+            }
+
+            window.scrollTo({ top: detailCard.offsetTop - 20, behavior: 'smooth' });
+        }
+
+        function payResteForCurrentStudent() {
+            if(!selectedStudentId) return;
+            const st = db.students.find(s => s.id === selectedStudentId);
+            if(st) {
+                showSubTab('school-pay');
+                document.getElementById('pay-student-search').value = st.name;
+                document.getElementById('pay-classe').value = st.classe;
+                document.getElementById('pay-type').value = 'reste';
+                document.getElementById('pay-reason').value = 'Andoha Reste';
+                autofillSchoolAmount();
+            }
+        }
+
+        function addAbsenceToCurrentStudent() {
+            if(!selectedStudentId) return;
+            const st = db.students.find(s => s.id === selectedStudentId);
+            if(st) {
+                st.absences += 1;
+                saveData();
+                renderStudentsTable();
+                viewStudentDetail(st.id);
+                alert(`Absence nampidirina ho an'i ${st.name}! Totaly: ${st.absences}`);
+            }
+        }
+
+        function printStudentAccount() { window.print(); }
+        function shareStudentAccount() {
+            if(!selectedStudentId) return;
+            const st = db.students.find(s => s.id === selectedStudentId);
+            let text = `👨‍🎓 COMPTE MPIANATRA: ${st.name} (${st.classe})\nRay aman-dreny: ${st.parents} | Contact: ${st.phone}\nFokontany: ${st.fokontany}\nAbsences: ${st.absences}\n`;
+            if(navigator.share) navigator.share({ title: 'Compte Mpianatra', text: text });
+            else alert(text);
+        }
+
+        function saveClassConfig(e) {
+            e.preventDefault();
+            const editId = document.getElementById('cfg-edit-id').value;
+            const cfgObj = {
+                id: editId ? parseFloat(editId) : Date.now(),
+                classe: document.getElementById('cfg-class').value.trim(),
+                ecolage: parseFloat(document.getElementById('cfg-ecolage').value),
+                droit: parseFloat(document.getElementById('cfg-droit').value)
+            };
+
+            if (editId) {
+                const idx = db.classConfig.findIndex(c => c.id == editId);
+                if (idx >= 0) db.classConfig[idx] = cfgObj;
+                alert("Voaova soa aman-tsara ny configuration!");
+            } else {
+                db.classConfig.push(cfgObj);
+                alert("Tehirizo soa aman-tsara ny configuration!");
+            }
+
+            saveData();
+            resetCfgForm();
+            renderClassConfigTable();
+        }
+
+        function editClassConfig(id) {
+            const cfg = db.classConfig.find(c => c.id === id);
+            if(!cfg) return;
+
+            document.getElementById('cfg-edit-id').value = cfg.id;
+            document.getElementById('cfg-class').value = cfg.classe;
+            document.getElementById('cfg-ecolage').value = cfg.ecolage;
+            document.getElementById('cfg-droit').value = cfg.droit;
+
+            document.getElementById('btn-save-cfg').innerText = "Hamafiso ny fanovàna";
+            document.getElementById('btn-cancel-cfg-edit').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetCfgForm() {
+            document.getElementById('cfg-edit-id').value = '';
+            document.getElementById('cfg-class').value = '';
+            document.getElementById('cfg-ecolage').value = '';
+            document.getElementById('cfg-droit').value = '';
+            document.getElementById('btn-save-cfg').innerText = "Tehirizo Config Classe";
+            document.getElementById('btn-cancel-cfg-edit').style.display = "none";
+        }
+
+        function deleteClassConfig(id) {
+            if(confirm("Tena hofaana ity configuration ity?")) {
+                db.classConfig = db.classConfig.filter(c => c.id !== id);
+                saveData();
+                renderClassConfigTable();
+            }
+        }
+
+        function renderClassConfigTable() {
+            const tbody = document.getElementById('class-config-table');
+            tbody.innerHTML = '';
+            db.classConfig.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${c.classe}</b></td>
+                        <td>${c.ecolage} Ar</td>
+                        <td>${c.droit} Ar</td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn btn-warning" style="width:auto; padding:3px 6px; font-size:11px;" onclick="editClassConfig(${c.id})">✏️ Ovay</button>
+                            <button class="btn btn-danger" style="width:auto; padding:3px 6px; font-size:11px;" onclick="deleteClassConfig(${c.id})">Fafana</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderSchoolAlerts() {
+            const container = document.getElementById('school-unpaid-list');
+            container.innerHTML = '';
+
+            let count = 0;
+            db.students.forEach(st => {
+                const pays = db.schoolPay.filter(p => p.studentName.toLowerCase() === st.name.toLowerCase());
+                const lastPay = pays.length > 0 ? pays[pays.length - 1] : null;
+                const hasReste = lastPay && lastPay.reste > 0;
+
+                if(!lastPay || hasReste) {
+                    count++;
+                    let resteMsg = hasReste ? `<span style="color:red; font-weight:bold;">Manana Rest mbola tsy ampy: ${lastPay.reste} Ar (${lastPay.reason})</span>` : `<span style="color:red;">Mbola tsy nadoa ecolage mihitsy</span>`;
+                    container.innerHTML += `
+                        <div class="item-card" style="border-left:5px solid red; background:#fff5f5;">
+                            <div>
+                                <b>🚨 ${st.name}</b> (${st.classe})<br>
+                                <small>${resteMsg}</small>
+                            </div>
+                            <button class="btn btn-primary" style="width:auto; padding:4px 8px; font-size:11px;" onclick="viewStudentDetail(${st.id}); showSubTab('school-students');">👁️ Jereo Compte</button>
+                        </div>
+                    `;
+                }
+            });
+
+            if(count === 0) {
+                container.innerHTML = "<p>✅ Tsy misy mpianatra tara na manana reste indray izao.</p>";
+            }
+        }
+
+        // Renters Management
+        function saveRentPayment(e) {
+            e.preventDefault();
+            const name = document.getElementById('rent-name').value.trim();
+            const door = document.getElementById('rent-door').value.trim();
+            const amount = parseFloat(document.getElementById('rent-amount').value);
+            const given = parseFloat(document.getElementById('rent-given').value);
+            const reste = Math.max(0, amount - given);
+
+            db.rent.push({ id: Date.now(), date: new Date().toISOString(), name, door, amount, given, reste });
+            db.caisse.push({ id: Date.now(), date: new Date().toISOString(), type: 'in', desc: `Mpanofa Trano: ${name} (${door})`, amount: given });
+
+            saveData();
+            alert("Loyer voasoratra soa aman-tsara sy tafiditra am Caisse!");
+            renderRentList();
+            e.target.reset();
+        }
+
+        function renderRentList() {
+            const container = document.getElementById('rent-list-box');
+            container.innerHTML = '';
+            db.rent.forEach(r => {
+                let badge = r.reste > 0 ? `<span class="stock-badge badge-danger">Reste: ${r.reste} Ar</span>` : `<span class="stock-badge badge-ok">AMPI</span>`;
+                container.innerHTML += `
+                    <div class="item-card">
+                        <div><b>🏠 ${r.name}</b> (${r.door})<br><small>Nomena: ${r.given} Ar / Totaly: ${r.amount} Ar</small></div>
+                        <div>${badge}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // 4. Caisse Operations
+        function addCashTransaction(e) {
+            e.preventDefault();
+            db.caisse.push({
+                id: Date.now(), date: new Date().toISOString(),
+                type: document.getElementById('cash-type').value,
+                desc: document.getElementById('cash-desc').value,
+                amount: parseFloat(document.getElementById('cash-amount').value)
+            });
+            saveData();
+            renderCaisseTable();
+            e.target.reset();
+            alert("Transaction tafiditra ao amin'ny Caisse!");
+        }
+
+        function renderCaisseTable() {
+            const tbody = document.getElementById('caisse-table-body');
+            tbody.innerHTML = '';
+            db.caisse.forEach(c => {
+                let badge = c.type === 'in' ? '🟢 Miditra' : (c.type === 'out' ? '🔴 Mivoaka' : '⚠️ Fatiantoka');
+                tbody.innerHTML += `<tr><td>${new Date(c.date).toLocaleDateString()}</td><td>${badge}</td><td>${c.desc}</td><td><b>${c.amount} Ar</b></td></tr>`;
+            });
+        }
+
+        function shareCaisseReport() {
+            let text = "💰 TATITRA NY CAISSE:\n";
+            db.caisse.forEach(c => text += `• ${c.desc}: ${c.amount} Ar (${c.type})\n`);
+            if(navigator.share) navigator.share({ title: 'Tatitra Caisse', text: text });
+            else alert(text);
+        }
+
+        // 5. Tantara General & Filters
+        function filterHistory() {
+            const dateVal = document.getElementById('history-date').value;
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+
+            let combinedHistory = [];
+
+            // Combine Sales and School Payments into general History
+            db.sales.forEach(s => {
+                let itemsList = s.items.map(i => `${i.name} (${i.qty} ${i.unitMode})`).join(', ');
+                combinedHistory.push({
+                    date: s.date,
+                    type: 'Varotra Entana',
+                    desc: itemsList,
+                    person: 'Mpanjifa',
+                    total: s.total,
+                    given: s.cashGiven,
+                    reste: 0
+                });
+            });
+
+            db.schoolPay.forEach(p => {
+                combinedHistory.push({
+                    date: p.date,
+                    type: `École (${p.type.toUpperCase()})`,
+                    desc: p.reason,
+                    person: `${p.studentName} (${p.classe})`,
+                    total: p.total,
+                    given: p.given,
+                    reste: p.reste
+                });
+            });
+
+            // Sort newest first
+            combinedHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if(dateVal) {
+                combinedHistory = combinedHistory.filter(h => h.date.startsWith(dateVal));
+            }
+
+            combinedHistory.forEach(h => {
+                let resteBadge = h.reste > 0 ? `<span style="color:red; font-weight:bold;">${h.reste} Ar</span>` : `<span style="color:green;">0 Ar</span>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(h.date).toLocaleDateString()} ${new Date(h.date).toLocaleTimeString().substring(0,5)}</td>
+                        <td><b>${h.type}</b><br><small>${h.desc}</small></td>
+                        <td>${h.person}</td>
+                        <td>${h.total} Ar</td>
+                        <td><b>${h.given} Ar</b></td>
+                        <td>${resteBadge}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function applyQuickFilter() {
+            const filter = document.getElementById('quick-filter').value;
+            const today = new Date().toISOString().substring(0, 10);
+            if(filter === 'today') {
+                document.getElementById('history-date').value = today;
+            } else {
+                document.getElementById('history-date').value = '';
+            }
+            filterHistory();
+        }
+
+        // 6. Dashboard Render
+        function renderDashboard() {
+            const todayStr = new Date().toDateString();
+            const todaySales = db.sales.filter(s => new Date(s.date).toDateString() === todayStr);
+            const totalToday = todaySales.reduce((sum, s) => sum + s.total, 0);
+            document.getElementById('dash-varotra-today').innerText = `${totalToday} Ar`;
+
+            const schoolToday = db.schoolPay.filter(s => new Date(s.date).toDateString() === todayStr);
+            const totalSchool = schoolToday.reduce((sum, s) => sum + s.given, 0);
+            document.getElementById('dash-ecole-today').innerText = `${totalSchool} Ar`;
+
+            // Profit Calculation
+            let totalProfit = 0;
+            db.sales.forEach(s => {
+                s.items.forEach(item => {
+                    const stk = db.stock.find(x => x.id === item.stockId);
+                    if(stk) totalProfit += (item.totalPrice - (stk.pAchat * item.qty));
+                });
+            });
+            const totalLoss = db.caisse.filter(c => c.type === 'loss' || c.type === 'out').reduce((sum, c) => sum + c.amount, 0);
+            document.getElementById('dash-tombony').innerText = `${(totalProfit - totalLoss)} Ar`;
+
+            // Totals Per Class
+            const classTotalsContainer = document.getElementById('dash-class-totals');
+            classTotalsContainer.innerHTML = '';
+            let classMap = {};
+
+            db.schoolPay.forEach(p => {
+                const cName = p.classe || 'Tsy Fantatra';
+                if(!classMap[cName]) classMap[cName] = 0;
+                classMap[cName] += p.given;
+            });
+
+            let grandSchoolTotal = 0;
+            for(let cName in classMap) {
+                grandSchoolTotal += classMap[cName];
+                classTotalsContainer.innerHTML += `<div><b>• Classe ${cName}:</b> ${classMap[cName]} Ar</div>`;
+            }
+            classTotalsContainer.innerHTML += `<hr style="margin:5px 0;"><div><b>TOTALY IZYS REHETRA MIDITRA (École): ${grandSchoolTotal} Ar</b></div>`;
+
+            // Low Stock Alert
+            const alertContainer = document.getElementById('low-stock-alert');
+            alertContainer.innerHTML = '';
+            db.stock.forEach(s => {
+                if(s.qty <= s.minSeuil) {
+                    alertContainer.innerHTML += `<div class="item-card" style="border-left: 5px solid red;"><b>${s.name}</b> <span style="color:red; font-weight:bold;">⚠️ Izao no sisa: ${s.qty.toFixed(1)} ${s.unit}</span></div>`;
+                }
+            });
+        }
+
+        // 7. Chat Offline System
+        function toggleApiSettings() {
+            const box = document.getElementById('api-settings-box');
+            box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+        }
+        function saveApiKey() {
+            db.apiKey = document.getElementById('api-key-input').value.trim();
+            saveData(); alert("API Key Voatahiry!"); toggleApiSettings();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim().toLowerCase();
+            if(!msg) return;
+
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<div class="chat-msg user">${input.value}</div>`;
+            input.value = '';
+
+            let reply = "Mpanampy Offline: Azonao anontaniana ahy ny momba ny stock, varotra, mpianatra, écolage na ny mpanofa trano.";
+            if(msg.includes('mpianatra') || msg.includes('ecolage') || msg.includes('reste')) {
+                reply = `📊 Fitantanana Mpianatra:\nTotaly mpianatra voasoratra: ${db.students.length}\nÉcolage voaray androany: ${document.getElementById('dash-ecole-today').innerText}`;
+            } else if(msg.includes('stock')) {
+                reply = `📦 Stock misy: ${db.stock.length} entana voasoratra.`;
+            }
+
+            setTimeout(() => {
+                chatBox.innerHTML += `<div class="chat-msg bot">${reply}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 300);
+        }
+
+        // Init App
+        renderDashboard();
+        renderStockTable();
+        renderClassConfigTable();
+        renderStudentsTable();
+        filterHistory();
+    </script>
+
+    <!-- PWA install banner: added without changing existing application logic -->
+    <aside id="pwa-install-banner" aria-label="Installer cette application" style="
+        position:fixed; left:12px; right:12px; bottom:12px; z-index:99999;
+        display:flex; align-items:center; gap:12px; padding:12px 14px;
+        background:#ffffff; color:#172033; border:1px solid #dbe3ef;
+        border-radius:16px; box-shadow:0 8px 30px rgba(15,23,42,.20);
+        font-family:system-ui,-apple-system,'Segoe UI',sans-serif;">
+      <img src="./icons/icon-192.png" alt="Logo Gestion de Stock" style="width:48px;height:48px;flex:0 0 48px;border-radius:12px;object-fit:contain;background:#fff;border:1px solid #e2e8f0;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:750;font-size:14px;line-height:1.25;">Installer cette application</div>
+        <div id="pwa-install-description" style="font-size:12px;color:#64748b;margin-top:3px;">Ajoutez l’application à votre écran d’accueil pour un accès rapide.</div>
+      </div>
+      <button id="pwa-install-button" type="button" style="border:0;border-radius:10px;padding:10px 12px;background:#0d6efd;color:#fff;font-weight:700;font-size:12px;white-space:nowrap;cursor:pointer;">Installer</button>
+      <button id="pwa-install-close" type="button" aria-label="Fermer" style="border:0;background:transparent;color:#64748b;font-size:22px;line-height:1;padding:2px;cursor:pointer;">×</button>
+    </aside>
+    <div id="pwa-install-help" role="dialog" aria-modal="true" aria-labelledby="pwa-help-title" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.55);padding:20px;align-items:center;justify-content:center;">
+      <div style="max-width:380px;width:100%;background:#fff;border-radius:18px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.25);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#172033;">
+        <div id="pwa-help-title" style="font-weight:800;font-size:18px;margin-bottom:10px;">Installer l’application</div>
+        <div id="pwa-help-text" style="font-size:14px;line-height:1.55;color:#475569;">Pour installer l’application, ouvrez le menu du navigateur puis choisissez « Ajouter à l’écran d’accueil » ou « Installer l’application ».</div>
+        <button id="pwa-help-ok" type="button" style="margin-top:18px;width:100%;padding:11px;border:0;border-radius:10px;background:#0d6efd;color:white;font-weight:700;">Compris</button>
+      </div>
+    </div>
+    <script>
+    (function () {
+      const banner = document.getElementById('pwa-install-banner');
+      const installButton = document.getElementById('pwa-install-button');
+      const closeButton = document.getElementById('pwa-install-close');
+      const help = document.getElementById('pwa-install-help');
+      const helpText = document.getElementById('pwa-help-text');
+      const helpOk = document.getElementById('pwa-help-ok');
+      let deferredPrompt = null;
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+      if (isStandalone) banner.style.display = 'none';
+
+      window.addEventListener('beforeinstallprompt', function (event) {
+        event.preventDefault();
+        deferredPrompt = event;
+        banner.style.display = 'flex';
+        installButton.textContent = 'Installer';
+      });
+
+      window.addEventListener('appinstalled', function () {
+        deferredPrompt = null;
+        banner.style.display = 'none';
+      });
+
+      installButton.addEventListener('click', async function () {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          try {
+            const choice = await deferredPrompt.userChoice;
+            if (choice && choice.outcome === 'accepted') banner.style.display = 'none';
+          } catch (e) {}
+          deferredPrompt = null;
+          return;
+        }
+        const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+          helpText.textContent = 'Ao amin’ny Safari: tsindrio ny bokotra Partager (□↑), avy eo fidio « Ajouter à l’écran d’accueil » (Add to Home Screen).';
+        } else if (!window.isSecureContext) {
+          helpText.textContent = 'Ilaina ny manokatra ity application ity amin’ny rohy HTTPS (ohatra Vercel) mba hahafahana mametraka azy. Tsy mandeha ny installation PWA rehefa sokafana mivantana ho fichier HTML.';
+        } else {
+          helpText.textContent = 'Sokafy ny menu ⋮ an’ny navigateur dia fidio « Installer l’application » na « Ajouter à l’écran d’accueil ». Raha tsy miseho io safidy io dia jereo raha HTTPS ny rohy ary afaka miasa ny service worker.';
+        }
+        help.style.display = 'flex';
+      });
+      closeButton.addEventListener('click', function () { banner.style.display = 'none'; });
+      helpOk.addEventListener('click', function () { help.style.display = 'none'; });
+      help.addEventListener('click', function (e) { if (e.target === help) help.style.display = 'none'; });
+
+      if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('./service-worker.js').catch(function (err) {
+            console.warn('PWA service worker registration failed:', err);
+          });
+        });
+      }
+    })();
+    </script>
+
+</body>
+</html>
